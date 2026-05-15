@@ -6,6 +6,7 @@ import (
 
 type ProductsRepositoryInterface interface {
 	GetAllProducts(offset, limit int, category string, priceLessThan float64) ([]Product, int, error)
+	GetProductByCode(code string) (*Product, error)
 }
 
 type ProductsRepository struct {
@@ -40,4 +41,19 @@ func (r *ProductsRepository) GetAllProducts(offset, limit int, category string, 
 		return nil, 0, err
 	}
 	return products, int(total), nil
+}
+
+func (r *ProductsRepository) GetProductByCode(code string) (*Product, error) {
+
+	var product Product
+
+	query := r.db.Model(&Product{})
+
+	query = query.Where("code = ?", code)
+
+	if err := query.Preload("Variants").Preload("Category").First(&product).Error; err != nil {
+		return nil, err
+	}
+
+	return &product, nil
 }

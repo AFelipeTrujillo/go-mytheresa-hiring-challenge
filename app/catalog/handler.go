@@ -19,6 +19,19 @@ type Product struct {
 	Category string  `json:"category"`
 }
 
+type ProductDetailResponse struct {
+	Code     string            `json:"code"`
+	Price    float64           `json:"price"`
+	Category string            `json:"category"`
+	Variants []VariantResponse `json:"variants"`
+}
+
+type VariantResponse struct {
+	Name  string  `json:"name"`
+	SKU   string  `json:"sku"`
+	Price float64 `json:"price"`
+}
+
 type CatalogHandler struct {
 	repo models.ProductsRepositoryInterface
 }
@@ -89,4 +102,44 @@ func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+func (h *CatalogHandler) HandleGetByCode(w http.ResponseWriter, r *http.Request) {
+	code := r.PathValue("code")
+
+	product, err := h.repo.GetProductByCode(code)
+	if err != nil {
+		http.Error(w, "product not found", http.StatusNotFound)
+		return
+	}
+
+	variants := make([]VariantResponse, len(product.Variants))
+	for i, variant := range product.Variants {
+		variantPrice := variant.Price.InexactFloat64()
+		if variant.Price.IsZero() {
+			variantPrice = product.Price.InexactFloat64()
+		}
+
+		variants[i] = VariantResponse{
+			Name:  variant.Name,
+			SKU:   variant.SKU,
+			Price: variantPrice,
+		}
+
+	}
+
+	response := ProductDetailResponse{
+		Code:     product.Code,
+		Price:    product.Price.InexactFloat64(),
+		Category: product.Category.Name,
+		Variants: variants,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 }
