@@ -49,7 +49,19 @@ func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 		limit = 100
 	}
 
-	res, total, err := h.repo.GetAllProducts(offset, limit)
+	category := r.URL.Query().Get("category")
+
+	priceLessThanStr := r.URL.Query().Get("price_less_than")
+	var priceLessThan float64
+	if priceLessThanStr != "" {
+		priceLessThan, err = strconv.ParseFloat(priceLessThanStr, 64)
+		if err != nil || priceLessThan < 0 {
+			http.Error(w, "invalid price_less_than", http.StatusBadRequest)
+			return
+		}
+	}
+
+	res, total, err := h.repo.GetAllProducts(offset, limit, category, priceLessThan)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
