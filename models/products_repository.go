@@ -5,7 +5,7 @@ import (
 )
 
 type ProductsRepositoryInterface interface {
-	GetAllProducts() ([]Product, error)
+	GetAllProducts(offset, limit int) ([]Product, int, error)
 }
 
 type ProductsRepository struct {
@@ -18,10 +18,16 @@ func NewProductsRepository(db *gorm.DB) ProductsRepositoryInterface {
 	}
 }
 
-func (r *ProductsRepository) GetAllProducts() ([]Product, error) {
+func (r *ProductsRepository) GetAllProducts(offset, limit int) ([]Product, int, error) {
 	var products []Product
-	if err := r.db.Preload("Variants").Find(&products).Error; err != nil {
-		return nil, err
+	var total int64
+
+	if err := r.db.Model(&Product{}).Count(&total).Error; err != nil {
+		return nil, 0, err
 	}
-	return products, nil
+
+	if err := r.db.Preload("Variants").Preload("Category").Offset(offset).Limit(limit).Find(&products).Error; err != nil {
+		return nil, 0, err
+	}
+	return products, int(total), nil
 }

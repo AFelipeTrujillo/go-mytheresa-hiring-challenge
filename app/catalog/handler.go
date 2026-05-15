@@ -3,12 +3,14 @@ package catalog
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/mytheresa/go-hiring-challenge/models"
 )
 
 type Response struct {
 	Products []Product `json:"products"`
+	Total    int       `json:"total"`
 }
 
 type Product struct {
@@ -28,7 +30,26 @@ func NewCatalogHandler(r models.ProductsRepositoryInterface) *CatalogHandler {
 }
 
 func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
-	res, err := h.repo.GetAllProducts()
+
+	offset, err := strconv.Atoi(r.URL.Query().Get("offset"))
+	if err != nil || offset < 0 {
+		offset = 0
+	}
+
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil {
+		limit = 10
+	}
+
+	if limit < 1 {
+		limit = 1
+	}
+
+	if limit > 100 {
+		limit = 100
+	}
+
+	res, total, err := h.repo.GetAllProducts(offset, limit)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -49,6 +70,7 @@ func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 
 	response := Response{
 		Products: products,
+		Total:    total,
 	}
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
