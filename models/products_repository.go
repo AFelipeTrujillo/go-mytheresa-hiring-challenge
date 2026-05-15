@@ -4,11 +4,15 @@ import (
 	"gorm.io/gorm"
 )
 
+type ProductsRepositoryInterface interface {
+	GetAllProducts() ([]Product, error)
+}
+
 type ProductsRepository struct {
 	db *gorm.DB
 }
 
-func NewProductsRepository(db *gorm.DB) *ProductsRepository {
+func NewProductsRepository(db *gorm.DB) ProductsRepositoryInterface {
 	return &ProductsRepository{
 		db: db,
 	}
