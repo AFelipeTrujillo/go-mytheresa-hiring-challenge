@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/mytheresa/go-hiring-challenge/app/api"
 	"github.com/mytheresa/go-hiring-challenge/models"
 )
 
@@ -36,7 +37,7 @@ func NewCategoriesHandler(r models.CategoriesRepositoryInterface) *CategoriesHan
 func (h *CategoriesHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 	res, total, err := h.repo.GetAll()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		api.ErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -56,7 +57,7 @@ func (h *CategoriesHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		api.ErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -66,12 +67,12 @@ func (h *CategoriesHandler) HandleCreateCategory(w http.ResponseWriter, r *http.
 	var req CreateCategoryRequestDTO
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid JSON payload or bad data types", http.StatusBadRequest)
+		api.ErrorResponse(w, http.StatusBadRequest, "invalid JSON payload or bad data types")
 		return
 	}
 
 	if err := validate.Struct(req); err != nil {
-		http.Error(w, "validation failed: "+err.Error(), http.StatusBadRequest)
+		api.ErrorResponse(w, http.StatusBadRequest, "validation failed: "+err.Error())
 		return
 	}
 
@@ -81,12 +82,10 @@ func (h *CategoriesHandler) HandleCreateCategory(w http.ResponseWriter, r *http.
 	}
 
 	if err := h.repo.Create(&category); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		api.ErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(category)
+	api.OKResponse(w, category)
 
 }

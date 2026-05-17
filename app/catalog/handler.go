@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/mytheresa/go-hiring-challenge/app/api"
 	"github.com/mytheresa/go-hiring-challenge/models"
 )
 
@@ -69,14 +70,14 @@ func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 	if priceLessThanStr != "" {
 		priceLessThan, err = strconv.ParseFloat(priceLessThanStr, 64)
 		if err != nil || priceLessThan < 0 {
-			http.Error(w, "invalid price_less_than", http.StatusBadRequest)
+			api.ErrorResponse(w, http.StatusBadRequest, "invalid price_less_than")
 			return
 		}
 	}
 
 	res, total, err := h.repo.GetAllProducts(offset, limit, category, priceLessThan)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		api.ErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -99,7 +100,7 @@ func (h *CatalogHandler) HandleGet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		api.ErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 }
@@ -109,7 +110,7 @@ func (h *CatalogHandler) HandleGetByCode(w http.ResponseWriter, r *http.Request)
 
 	product, err := h.repo.GetProductByCode(code)
 	if err != nil {
-		http.Error(w, "product not found", http.StatusNotFound)
+		api.ErrorResponse(w, http.StatusNotFound, "product not found")
 		return
 	}
 
@@ -135,11 +136,6 @@ func (h *CatalogHandler) HandleGetByCode(w http.ResponseWriter, r *http.Request)
 		Variants: variants,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	api.OKResponse(w, response)
 
 }

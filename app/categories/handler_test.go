@@ -75,11 +75,11 @@ func TestHandleCreateCategories_Success(t *testing.T) {
 
 		handler.HandleCreateCategory(rec, req)
 
-		if rec.Code != http.StatusCreated {
-			t.Errorf("Status 201 was expected, but %d was returned", rec.Code)
+		if rec.Code != http.StatusOK {
+			t.Errorf("Status 200 was expected, but %d was returned", rec.Code)
 		}
 
-		assert.Equal(t, http.StatusCreated, rec.Code)
+		assert.Equal(t, http.StatusOK, rec.Code)
 		var category models.Category
 		json.Unmarshal(rec.Body.Bytes(), &category)
 

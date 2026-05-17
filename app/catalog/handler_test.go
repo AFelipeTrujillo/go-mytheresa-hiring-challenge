@@ -27,7 +27,7 @@ func (m *mockRepo) GetProductByCode(code string) (*models.Product, error) {
 	return m.product, m.err
 }
 
-func TestHandleGetSuccess(t *testing.T) {
+func TestHandleGet_Success(t *testing.T) {
 	mock := &mockRepo{
 		products: []models.Product{
 			{
